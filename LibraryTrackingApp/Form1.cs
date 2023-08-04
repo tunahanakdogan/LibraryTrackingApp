@@ -13,7 +13,7 @@ namespace LibraryTrackingApp
 {
     public partial class Form1 : Form
     {
-        SqlConnection sqlConnection = CreateSQLConnection();
+        readonly SqlConnection sqlConnection = CreateSQLConnection();
         public static SqlConnection CreateSQLConnection()
         {
             try
@@ -30,8 +30,19 @@ namespace LibraryTrackingApp
 
         public void DeleteRecord() 
         {
-            string bookNameToDelete = dataGridView1.SelectedRows[0].Cells[1].Value.ToString();
-            Console.WriteLine(bookNameToDelete);
+            try
+            {
+                string bookNameToDelete = dataGridView1.SelectedRows[0].Cells[1].Value.ToString();
+                string authorNameToDelete = dataGridView1.SelectedRows[0].Cells[2].Value.ToString();
+                sqlConnection.Execute("delete from Book where BookName = @BookName", new { BookName = bookNameToDelete });
+                sqlConnection.Execute("delete from Author where AuthorName = @AuthorName", new { AuthorName = authorNameToDelete });
+                dataGridView1.Rows.RemoveAt(dataGridView1.SelectedRows[0].Index);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error during deletion: " + ex.ToString());
+                throw;
+            }
         }
         public Author GetAuthorByID(int authorID)
         {
