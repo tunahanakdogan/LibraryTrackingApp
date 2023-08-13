@@ -28,14 +28,19 @@ namespace LibraryTrackingApp
             }
         }
 
-        public void DeleteRecord() 
+        public  void DeleteRecord() 
         {
             try
             {
                 string bookNameToDelete = dataGridView1.SelectedRows[0].Cells[1].Value.ToString();
                 string authorNameToDelete = dataGridView1.SelectedRows[0].Cells[2].Value.ToString();
+                GetAuthorByName(authorNameToDelete);
+                
+                if (GetBookAuthors(authorNameToDelete) == 1 )
+                {
+                    sqlConnection.Execute("delete from Author where AuthorName = @AuthorName", new { AuthorName = authorNameToDelete });
+                }
                 sqlConnection.Execute("delete from Book where BookName = @BookName", new { BookName = bookNameToDelete });
-                sqlConnection.Execute("delete from Author where AuthorName = @AuthorName", new { AuthorName = authorNameToDelete });
                 dataGridView1.Rows.RemoveAt(dataGridView1.SelectedRows[0].Index);
             }
             catch (Exception ex)
@@ -52,7 +57,11 @@ namespace LibraryTrackingApp
         {
             return sqlConnection.Query<Author>("select * from Author where AuthorName = @AuthorName", new {AuthorName = authorName}).FirstOrDefault();
         }
-        private void AddBook(string authorName)
+        public int GetBookAuthors(string authorName)
+        {
+            return sqlConnection.Query<int>("select Count(author.AuthorName) from book inner join author on Book.AuthorID = Author.AuthorID").First();
+        }
+        private void AddBook(string authorName, bool read)
         {
            Author authorToAdd = GetAuthorByName(authorName);
            if(authorToAdd == null)
@@ -60,7 +69,7 @@ namespace LibraryTrackingApp
                sqlConnection.Execute("insert into Author(AuthorName) values(@AuthorName)", new { AuthorName = authorName });
                authorToAdd = GetAuthorByName(authorName);
            }
-           sqlConnection.Execute("insert into Book(BookName,AuthorID) values(@BookName,@AuthorID)", new { BookName = textBox1.Text, AuthorID = authorToAdd.AuthorID });
+           sqlConnection.Execute("insert into Book(BookName,AuthorID,[Read]) values(@BookName,@AuthorID,@Read)", new { BookName = textBox1.Text, AuthorID = authorToAdd.AuthorID, Read = read });
         }
         private void FillGrid()
         {
@@ -73,11 +82,11 @@ namespace LibraryTrackingApp
             dataGridView1.Columns[0].Name = "Read";
             dataGridView1.Columns[1].Name = "BookName";
             dataGridView1.Columns[2].Name = "AuthorName";
-            
+           
             foreach (var book in books)
             {
                 if (book.Read == true) dataGridView1.Rows.Add("Yes", book.BookName, GetAuthorByID(book.AuthorID).AuthorName);
-                else dataGridView1.Rows.Add("No", book.BookName, book.AuthorID);
+                else dataGridView1.Rows.Add("No", book.BookName, GetAuthorByID(book.AuthorID).AuthorName);
 
             }
         }
@@ -89,7 +98,7 @@ namespace LibraryTrackingApp
 
         private void button1_Click(object sender, EventArgs e)
         {
-            AddBook(textBox2.Text);
+            AddBook(textBox2.Text, checkBox1.Checked);
             FillGrid();
         }
 
