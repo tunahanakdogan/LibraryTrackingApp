@@ -4,13 +4,19 @@ using System.ComponentModel;
 using System.Data;
 using System.Data.SqlClient;
 using System.Drawing;
+using System.IO;
 using System.Linq;
+using System.Reflection.Emit;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Dapper;
 namespace LibraryTrackingApp
 {
+    //Todo 
+    //Gridden editleyince sql güncellenmiyor onu değiştir. 
+
+
     public partial class Form1 : Form
     {
         readonly SqlConnection sqlConnection = CreateSQLConnection();
@@ -69,7 +75,8 @@ namespace LibraryTrackingApp
                sqlConnection.Execute("insert into Author(AuthorName) values(@AuthorName)", new { AuthorName = authorName });
                authorToAdd = GetAuthorByName(authorName);
            }
-           sqlConnection.Execute("insert into Book(BookName,AuthorID,[Read]) values(@BookName,@AuthorID,@Read)", new { BookName = textBox1.Text, AuthorID = authorToAdd.AuthorID, Read = read });
+           sqlConnection.Execute("insert into Book(BookName,AuthorID,[Read]) values(@BookName,@AuthorID,@Read)", 
+               new { BookName = textBox1.Text, AuthorID = authorToAdd.AuthorID, Read = read});
         }
         private void FillGrid()
         {
@@ -77,17 +84,17 @@ namespace LibraryTrackingApp
             //form kapanırken connectionı kapat
             List<Book> books = sqlConnection.Query<Book>(
                    "select * from Book").ToList();
-            dataGridView1.ColumnCount = 3;
+            dataGridView1.ColumnCount = 5;
 
             dataGridView1.Columns[0].Name = "Read";
             dataGridView1.Columns[1].Name = "BookName";
             dataGridView1.Columns[2].Name = "AuthorName";
+
            
             foreach (var book in books)
             {
                 if (book.Read == true) dataGridView1.Rows.Add("Yes", book.BookName, GetAuthorByID(book.AuthorID).AuthorName);
                 else dataGridView1.Rows.Add("No", book.BookName, GetAuthorByID(book.AuthorID).AuthorName);
-
             }
         }
         public Form1()
@@ -109,7 +116,26 @@ namespace LibraryTrackingApp
 
         private void button3_Click(object sender, EventArgs e)
         {
-            //Add to, to read list
+           
+           
+        }
+
+        private void textBox3_Click(object sender, EventArgs e)
+        {
+
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            //openFileDialog.Filter = "PDF Files (*.pdf)|*.pdf";
+
+            if (openFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                string filePath = openFileDialog.FileName;
+               textBox3.Text = Path.GetFileName(filePath);
+                // Proceed with saving the path to SQL
+            }
+            else
+            {
+                // Handle cancel or error cases
+            }
         }
     }
 }

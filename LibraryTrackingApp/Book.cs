@@ -12,5 +12,7 @@ namespace LibraryTrackingApp
         public string BookName { get; set; }
         public int AuthorID { get; set; }
         public bool Read { get; set; }
+        public bool ToRead { get; set; }
+        public bool NowReading { get; set; }
     }
 }
